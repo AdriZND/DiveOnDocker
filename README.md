@@ -145,7 +145,42 @@ La estructura del proyecto es la siguiente:
 [![estructura-proyecto.png](https://i.postimg.cc/fb4WT2SN/estructura-proyecto.png)](https://postimg.cc/SnrbgGGT)
 
 **Dockerfile del backend**
-[![backend-dockerfile.png](https://i.postimg.cc/Njt9djbT/backend-dockerfile.png)](https://postimg.cc/jL8S5Kpd)
+[![backend-dockerfile.png](https://i.postimg.cc/CxDjP2jB/backend-dockerfile.png)](https://postimg.cc/5X4YjnKb)
+
+Como vemos en lugar de utilizar simplemente `COPY . .` para copiar todos los archivos de golpe realizamos dos `COPY` en el primero copiamos el package.json y el package-lock.json y en el segundo el resto de los archivos. Esto es una **buena practica** ya que son archivos que no suelen modificarse tanto y nos evita tener que copiarlos e instalar las dependencias cada vez que se construya la imagen, a no ser que hayamos incluido alguna nueva dependencia. Solamente copiariamos el resto de archivos para implementar nuevas modificaciones de código etc.
+
+**Dockerfile del Frontend para desarrollo**
+[![frontend-dev-dockerfile.png](https://i.postimg.cc/sxQBBBmQ/frontend-dev-dockerfile.png)](https://postimg.cc/kRCMzgkq)
+Como observamos es practicamente igual a la del backend, a diferencia del comando que se lanza al construir el contenedor `npm run dev` para lanzar el frontend de Vue 3 + Vite en modo desarrollo.
+
+**Dockerfile del Frontend para producción**
+[![frontend-prod-dockerfile.png](https://i.postimg.cc/Qx79hTVv/frontend-prod-dockerfile.png)](https://postimg.cc/svVDJ1YJ)
+Puesto que cada contenedor debe estar lo más aislado posible y desempeñar solo una función vamos a tener frontend y backend en contenedores separados. Por ello vamos a utilizar [nginx](https://hub.docker.com/_/nginx) para servir los archivos estaticos de la build del frontend.
+
+El archivo nginx.conf se ve tal que así
+[![nginx-conf.png](https://i.postimg.cc/c4x2NQDL/nginx-conf.png)](https://postimg.cc/0r4cYJRT)
+
+Es una configuración por defecto que practicamente no tenemos que cambiar, si queremos retocar algo acudir a la documentación de nginx.
+Lo unico que he cambiado aqui ha sido el "server_name" para establecer la dirección del backend.
+
+**Resumen**
+Con esto tenemos todas las Dockerfiles que necesitamos para desplegar la aplicación tanto en producción como en desarrollo. Podemos pensar que falta aun la configuración de la BDD y otras características pero eso lo realizaremos todo en los archivos de docker-compose.
+
+### 2. Crear archivos docker-compose para lanzar la app.
+Docker Compose es una herramienta que nos permite manejar aplicaciones multi-contenedor. Lanzar varios contenedores especificando para cada uno la imagen que queramos y la configuración deseada. Así como crear [bind-mounts](https://docs.docker.com/storage/bind-mounts/) para monitorizar los cambios en los documentos, [volumenes](https://docs.docker.com/storage/volumes/) para almacenar los datos de los contenedores e implementar [networks](https://docs.docker.com/network/) para que los contenedores puedan comunicarse entre si.
+
+Si bien Docker Compose hace gran parte del trabajo por nosotros y nos simplifica mucho la configuración de todas estas cosas es importante al menos saber a que se refieren estos conceptos por lo que recomiendo echar un vistazo a la documentación antes de continuar.
+
+Docker compose funciona a traves de **servicios** cada uno de estos servicios hace referente a una parte o funcionalidad de nuestra aplicación que se ejecutará en un contenedor aislado el cual esta basado en una imagen.
+
+Cuando un contenedor es destruido toda su información desaparece y no podemos volver a acceder a ella, de manera que si estamos trabajando con una base de datos MySQL por ejemplo y durante el desarrollo estamos haciendo operaciones de CRUD con datos en ella a los que más adelante queramos acceder vamos a necesitar **volumenes**, estos volumenes los definiremos en el archivo de compose también y los asignaremos a los servicios correspondientes.
+
+Para comunicarse entre si los contenedores tienen que estar dentro de una misma network, ya que tenemos que ser conscientes de que por defecto se ejecutan de manera aislada y no pueden relacionarse entre si. Docker Compose establece por defecto una network entre todos los servicios del archivo en cuestión, si bien es **conveniente, y una buena práctica** definir nosotros mismos la network para que tenga al menos un nombre conocido.
+
+Una vez hemos visto las características más importantes vamos a ver como ejemplo los archivos de docker-compose que tenemos en nuestro proyecto.
+
+**docker-compose.dev para lanzar la app en desarrollo**
+[![docker-compose-dev.png](https://i.postimg.cc/L59YHHQw/docker-compose-dev.png)](https://postimg.cc/VrhLgc8W)
 
 
 
