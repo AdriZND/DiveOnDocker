@@ -324,12 +324,19 @@ Y después tenemos definidos un volumen para la base de datos y una network, que
 [![docker-compose-prod.png](https://i.postimg.cc/2j7twvgm/docker-compose-prod.png)](https://postimg.cc/vDDX81QS)
 
 Como vemos hay diferencias pero son muy sutiles
+
 \- El servicio de **mysql** de producción corre en el puerto 3306 de nuestro host, por eso el de desarrollo lo teniamos mapeado al 3307.
+
 \- El volumen al que se monta el servicio de la BDD es "mysql-data" en lugar de "mysql-dev-data", para tener volumenes distintos en producción y desarrollo.
+
 \- En el servicio de **backend** para producción establecemos la NODE_ENV a "production" en lugar de a "development"
+
 \- En el servicio de **frontend** establecemos NODE_ENV también a producción y hacemos el build de la imagen con el Dockerfile de producción en lugar del de desarrollo. Esto nos hara un build del frontend y nos servirá el dist a través de nginx.
+
 \- En el servicio de **frontend** mapeamos el puerto de nuestro host en que queremos que se sirva el frontend al puerto expuesto de nginx. He puesto el 81 pero pudes poner el que quieras siempre que este libre.
+
 \- El **volumen** creado es diferente al anterior 
+
 **NOTA:** Podeis ver que la network de desarrollo y producción es la misma, esto se debe a que no he usado ambos entornos a la vez nunca y por lo tanto no habria problemas ya que la network se crea y se destruye cuando iniciamos o paramos docker compose. Si queremos tener el entorno de producción y el de desarrollo desplegados a la vez habria que especificar nombres de network diferentes para cada una. 
 
 ### 3. .dockerignore
