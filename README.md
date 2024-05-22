@@ -134,12 +134,19 @@ Esas capas van almacenandose en caché de manera que si más tarde queremos actu
 </figure>
 
 Algunas de las instrucciones más comunes que se utilizan en las DockerFiles son las siguientes, para ver todas acude a la [referencia de Dockerfile](https://docs.docker.com/reference/dockerfile/)
+
 `FROM <image>` - Especifica la imagen base que se va a utilizar
+
 `WORKDIR <path>` - Establece el "directorio de trabajo" o path de la imagen en el que se va a trabajar.
+
 `COPY <host-path> <image-path>` copia archivos del host en el path especificado y los pega en el path de la imagen
+
 `RUN <command>` ejecuta el comando especificado
+
 `ENV <name> <value>` asigna o crea variables de entorno que el contenedor utilizará
+
 `EXPOSE <port-number>` indica el puerto que a la imagen le gustaria exponer
+
 `CMD ["<command>", "<arg1>"]` establece el comando por defecto que ejecutara un contenedor que utiliza esta imagen. 
 [Diferencias entre RUN, CMD y ENTRYPOINT](https://dev.to/kittipat1413/docker-run-vs-cmd-vs-entrypoint-demystifying-the-differences-2a4p)
 
@@ -159,6 +166,15 @@ Como vemos en lugar de utilizar simplemente `COPY . .` para copiar todos los arc
 [![frontend-dev-dockerfile.png](https://i.postimg.cc/sxQBBBmQ/frontend-dev-dockerfile.png)](https://postimg.cc/kRCMzgkq)
 
 Como observamos es practicamente igual a la del backend, a diferencia del comando que se lanza al construir el contenedor `npm run dev` para lanzar el frontend de Vue 3 + Vite en modo desarrollo.
+Si haceis esto y ves que no se muestra el frontend en el puerto adecuado seguramente sea porque teneis que configurar Vite correctamente, tenemos que tener en cuenta que estamos usando el frontend a través de un contenedor y no de nuestro propio localhost. 
+Por lo que tenemos que añadir esto a la configuración de Vite
+```
+server: {
+    host: '0.0.0.0', 
+    port: 5173,     
+  },
+```
+Para asi indicarle a que escuche otras direcciones.
 
 **Dockerfile del Frontend para producción**
 
@@ -174,6 +190,7 @@ Es una configuración por defecto que practicamente no tenemos que cambiar, si q
 Lo unico que he cambiado aqui ha sido el "server_name" para establecer la dirección del backend.
 
 **Resumen**
+
 Con esto tenemos todas las Dockerfiles que necesitamos para desplegar la aplicación tanto en producción como en desarrollo. Podemos pensar que falta aun la configuración de la BDD y otras características pero eso lo realizaremos todo en los archivos de docker-compose.
 
 ### 2. Crear archivos docker-compose para lanzar la app.
@@ -196,6 +213,7 @@ En los archivos de docker-compose como podemos ver es importante la indentación
 En este archivo tenemos 3 servicios:
 
 \- **mysql**
+
 [![mysql-service.png](https://i.postimg.cc/0QT6wYQg/mysql-service.png)](https://postimg.cc/Q9qxLW1S)
 
 En este servicio hacemos lo siguiente
@@ -242,6 +260,7 @@ Esta parte es totalmente opcional pero la recomiendo, lo que hace basicamente es
 En lo personal me ha resultado útil ya que si no a veces el backend se inicia antes de que la BDD esté preparada y da fallos.
 
 \- **backend**
+
 [![backend-service.png](https://i.postimg.cc/VkQr7QXx/backend-service.png)](https://postimg.cc/dL6V1fH6)
 
 Pasaremos por alto configuraciones ya explicadas anteriormente.
@@ -288,6 +307,7 @@ Espera al health-check que hemos establecido en el servicio de la BDD, y solo se
  Define el comando que se ejecutará al iniciar el contenedor, en este caso lanzar el backend.
 
 \- **frontend**
+
 [![frontend-dev-service.png](https://i.postimg.cc/9fgSGjk9/frontend-dev-service.png)](https://postimg.cc/NyTpcZBG)
 
 En esta no hay nada nuevo que no hayamos visto, utilizamos el npm run dev para lanzar el frontend en modo desarrollo.
@@ -300,6 +320,7 @@ Y después tenemos definidos un volumen para la base de datos y una network, que
 
 
 #### 2.2 docker-compose.yaml para lanzar la app en producción
+
 [![docker-compose-prod.png](https://i.postimg.cc/2j7twvgm/docker-compose-prod.png)](https://postimg.cc/vDDX81QS)
 
 Como vemos hay diferencias pero son muy sutiles
@@ -312,11 +333,13 @@ Como vemos hay diferencias pero son muy sutiles
 **NOTA:** Podeis ver que la network de desarrollo y producción es la misma, esto se debe a que no he usado ambos entornos a la vez nunca y por lo tanto no habria problemas ya que la network se crea y se destruye cuando iniciamos o paramos docker compose. Si queremos tener el entorno de producción y el de desarrollo desplegados a la vez habria que especificar nombres de network diferentes para cada una. 
 
 ### 3. .dockerignore
+
 [![dockerignore.png](https://i.postimg.cc/jjW56R50/dockerignore.png)](https://postimg.cc/t1jppQW2)
 
 Es un archivo muy sencillito en el que simplemente especificamos los archivos que no queremos que docker tenga en cuenta a la hora de crear las imagenes.
 
 ### 4. Ejecutar docker compose
+
 Nos dirigimos en la consola de Debian al directorio en el que se encuentren nuestros archivos de docker-compose.
 Ejecutamos el siguiente comando
 ```
