@@ -195,7 +195,6 @@ Una vez hemos visto las características más importantes vamos a ver como ejemp
 
 
 
-
 ## Buenas prácticas
 
 Vamos a hacer una pequeña recopilación de buenas prácticas que seguir mientras desarrollamos con Docker. Gran parte de ellas han sido recapituladas de la [documentación oficial](https://docs.docker.com/develop/dev-best-practices/).
