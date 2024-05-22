@@ -125,6 +125,7 @@ Una vez hemos aprendido a crear nuestras imagenes y a lanzar una aplicación mul
 ### 1. Crear Dockerfiles para Frontend, Backend y BDD
 El primer paso para poder desplegar o desarrollar nuestra aplicación con Docker es crear las Dockerfiles, son archivos de configuración separados por ordenes o instrucciones que se van ejecutando por [capas](https://docs.docker.com/build/guide/layers/) para poder formar la imagen. 
 Esas capas van almacenandose en caché de manera que si más tarde queremos actualizar la imagen porque hemos hecho un cambio en una linea de código, solo la capa que se vea afectada por ello tendra que ser reconstruida y añadida a la imagen, acelerando el proceso de ejecución de la misma.
+
 <figure>
 <img src="https://docs.docker.com/build/guide/images/layers.png" alt="Dockerfile layers">
 <figcaption>Imagen perteneciente a la documentación de docker.</figcaption>
@@ -142,22 +143,27 @@ Algunas de las instrucciones más comunes que se utilizan en las DockerFiles son
 
 Ahora que sabemos un poco más sobre las Dockerfiles y como se construyen vamos a ver como he Dockerizado la aplicación.
 La estructura del proyecto es la siguiente:
+
 [![estructura-proyecto.png](https://i.postimg.cc/fb4WT2SN/estructura-proyecto.png)](https://postimg.cc/SnrbgGGT)
 
 **Dockerfile del backend**
+
 [![backend-dockerfile.png](https://i.postimg.cc/CxDjP2jB/backend-dockerfile.png)](https://postimg.cc/5X4YjnKb)
 
 Como vemos en lugar de utilizar simplemente `COPY . .` para copiar todos los archivos de golpe realizamos dos `COPY` en el primero copiamos el package.json y el package-lock.json y en el segundo el resto de los archivos. Esto es una **buena practica** ya que son archivos que no suelen modificarse tanto y nos evita tener que copiarlos e instalar las dependencias cada vez que se construya la imagen, a no ser que hayamos incluido alguna nueva dependencia. Solamente copiariamos el resto de archivos para implementar nuevas modificaciones de código etc.
 
 **Dockerfile del Frontend para desarrollo**
+
 [![frontend-dev-dockerfile.png](https://i.postimg.cc/sxQBBBmQ/frontend-dev-dockerfile.png)](https://postimg.cc/kRCMzgkq)
 Como observamos es practicamente igual a la del backend, a diferencia del comando que se lanza al construir el contenedor `npm run dev` para lanzar el frontend de Vue 3 + Vite en modo desarrollo.
 
 **Dockerfile del Frontend para producción**
+
 [![frontend-prod-dockerfile.png](https://i.postimg.cc/Qx79hTVv/frontend-prod-dockerfile.png)](https://postimg.cc/svVDJ1YJ)
 Puesto que cada contenedor debe estar lo más aislado posible y desempeñar solo una función vamos a tener frontend y backend en contenedores separados. Por ello vamos a utilizar [nginx](https://hub.docker.com/_/nginx) para servir los archivos estaticos de la build del frontend.
 
 El archivo nginx.conf se ve tal que así
+
 [![nginx-conf.png](https://i.postimg.cc/c4x2NQDL/nginx-conf.png)](https://postimg.cc/0r4cYJRT)
 
 Es una configuración por defecto que practicamente no tenemos que cambiar, si queremos retocar algo acudir a la documentación de nginx.
@@ -180,6 +186,7 @@ Para comunicarse entre si los contenedores tienen que estar dentro de una misma 
 Una vez hemos visto las características más importantes vamos a ver como ejemplo los archivos de docker-compose que tenemos en nuestro proyecto.
 
 **docker-compose.dev para lanzar la app en desarrollo**
+
 [![docker-compose-dev.png](https://i.postimg.cc/L59YHHQw/docker-compose-dev.png)](https://postimg.cc/VrhLgc8W)
 
 
