@@ -115,11 +115,13 @@ Ahora que tenemos Docker instalado vamos a proceder a dockerizar nuestra aplicac
 #### ¿Qué queremos conseguir?
 Nuestra intención es ser capaces de lanzar la aplicación tanto en modo de producción como de desarrollo a través de [Docker Compose](https://docs.docker.com/compose/), es una herramienta que nos permite lanzar varios contenedores a la vez e interconectarlos para trabajar a la vez con ellos.
 Para lograr esto debemos seguir los siguientes pasos.
-###### 1. Crear Dockerfiles para Frontend, Backend y BDD
+##### 1. Crear Dockerfiles para Frontend, Backend y BDD
 Las [Dockerfiles](https://docs.docker.com/guides/docker-concepts/building-images/writing-a-dockerfile/) son los archivos que nos permiten construir imagenes para luego poder ser utilizadas a traves de contenedores.
-###### 2. Crear archivos docker-compose para lanzar la app.
+##### 2. Crear archivos docker-compose para lanzar la app.
 El [docker-compose.yaml](https://docs.docker.com/compose/compose-application-model/) nos permite lanzar a la vez diferentes contenedores basados en sus correspondientes imagenes y con sus configuraciones.
-###### 3. Publicar nuestras imagenes
+##### 3. .dockerignore
+Fichero similar a un .gitignore para que determinadas cosas no se vean incluidas en la imagen, como por ejemplo las dependencias.
+##### 4. Publicar nuestras imagenes
 Una vez hemos aprendido a crear nuestras imagenes y a lanzar una aplicación multi-contenedor es conveniente aprender a subir las imagenes a un registro para que otras personas puedan utilizarlas.
 
 ### 1. Crear Dockerfiles para Frontend, Backend y BDD
@@ -187,7 +189,7 @@ Para comunicarse entre si los contenedores tienen que estar dentro de una misma 
 
 Una vez hemos visto las características más importantes vamos a ver como ejemplo los archivos de docker-compose que tenemos en nuestro proyecto.
 
-**docker-compose.dev para lanzar la app en desarrollo**
+#### 2.1 docker-compose.dev.yaml para lanzar la app en desarrollo
 
 En los archivos de docker-compose como podemos ver es importante la indentación (como en python), ya que si no es correcta puede llevar a un mal funcionamiento del archivo.
 
@@ -221,17 +223,134 @@ Mapeamos el puerto del contenedor 3306 (por defecto en MySQL) al puerto 3307 de 
 volumes:
     - mysql-dev-data:/var/lib/mysql
 ```
-Establecemos el volumen que vamos a utilizar para persistir los datos de la BDD, "mysql-dev-data" es el nombre de volumen que creamos en el docker-compose y ":/var/lib/mysql" mapea el path por defecto en el que el contenedor de MySQL guarda los datos a nuestro volumen.
+Establecemos el volumen que vamos a utilizar para persistir los datos de la BDD, "mysql-dev-data" es el nombre de volumen que creamos en el docker-compose y ":/var/lib/mysql" mapea el path por defecto en el que el contenedor de MySQL guarda los datos, a nuestro volumen.
 
-\- backend
-\- frontend
+```
+networks:
+    - app-network
+```
+Establecemos la network a la que va a estar conectado nuestro contenedor, si no establecemos network en los servicios docker-compose crea una por defecto y los conecta a ella, pero asi controlamos cual es de mejor manera.
 
-Y demás tenemos definidos un volumen para la base de datos y una network
+```
+ healthcheck:
+    test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+```
+Esta parte es totalmente opcional pero la recomiendo, lo que hace basicamente es un check de salud para cerciorarse de que la base de datos esta funcionando, esto lo utilizamos más adelante en el servicio del backend para que el backend no se inicie hasta que la BDD este operativa.
+En lo personal me ha resultado útil ya que si no a veces el backend se inicia antes de que la BDD esté preparada y da fallos.
+
+\- **backend**
+[![backend-service.png](https://i.postimg.cc/VkQr7QXx/backend-service.png)](https://postimg.cc/dL6V1fH6)
+
+Pasaremos por alto configuraciones ya explicadas anteriormente.
+
+```
+build:
+    context: ./Backend
+    dockerfile: Dockerfile
+```
+En este caso en lugar de utilizar una imagen ya creada hacemos el build de la imagen directamente desde el Dockerfile. Tambien es posible subir la imagen a un registro y utilizar esa imagen, lo veremos más adelante.
+
+```
+env_file:
+    - ./Backend/.env
+```
+Especificamos el archivo .env que utilizará el contenedor para las variables de entorno de nuestro Backend.
+
+```
+environment:
+    NODE_ENV: development
+```
+Definimos otras variables de entorno que no están en el .env, esto es interesante ya que podemos definir el NODE_ENV por ejemplo desde docker-compose y de esa manera manejar en que modo de producción corre nuestro backend.
+
+```
+volumes:
+    - ./Backend:/app
+    - /app/node_modules
+```
+Al contrario que en el servicio de **mysql** no hemos definido ningún volumen al que asignar estas rutas, por lo que estariamos realizando bind-mounts. Tenemos que tener en cuenta que los datos y los cambios que efectuemos en el código, si bien se ven en tiempo real y se modifican mientras tengamos el contenedor corriendo, solo estarán guardados en nuestro host, no se veran guarados en el contenedor o su imagen. Por lo que si destruimos el contenedor y lo volvemos a crear los cambios no se verán reflejados, a no ser que volvamos a hacer el bind-mount. Si queremos que las modificaciones persistan deberemos actualizar la imagen del contenedor.
+¿Para que sirve esto entonces?
+con `- ./Backend:/app` Montamos el directorio ./Backend del host en /app dentro del contenedor, permitiendo que el código fuente sea accesible dentro del contenedor y los cambios se reflejen mientras desarrollamos en tiempo real sin necesidad de reconstruir la imagen y volver a montar el contenedor.
+`- /app/node_modules` es un bind-mount que apunta al directorio de node_modules del contenedor. Al haber hecho bind-mount del ./Backend al contenedor podemos cambiar accidentalmente el archivo node_modules o borrarlo completamente mientras desarrollamos, haciendo que la aplicación falle, con esta opcion impedimos que sea modificado de alguna manera. Esto hace que las dependencias de nuestro proyecto sean manejadas de manera aislada por el contenedor evitando incompatibilidades.
+
+```
+depends_on:
+    mysql:
+      condition: service_healthy
+```
+Espera al health-check que hemos establecido en el servicio de la BDD, y solo se inicia una vez la BDD tiene el status de healthy
+
+```
+ command: npm start
+ ```
+ Define el comando que se ejecutará al iniciar el contenedor, en este caso lanzar el backend.
+
+\- **frontend**
+[![frontend-dev-service.png](https://i.postimg.cc/9fgSGjk9/frontend-dev-service.png)](https://postimg.cc/NyTpcZBG)
+
+En esta no hay nada nuevo que no hayamos visto, utilizamos el npm run dev para lanzar el frontend en modo desarrollo.
+
+
+Y después tenemos definidos un volumen para la base de datos y una network, que hemos visto utilizados en los servicios anteriores.
+
+[![volumes-network.png](https://i.postimg.cc/FzrLm29P/volumes-network.png)](https://postimg.cc/tZcTNvnP)
 
 
 
+#### 2.2 docker-compose.yaml para lanzar la app en producción
+[![docker-compose-prod.png](https://i.postimg.cc/2j7twvgm/docker-compose-prod.png)](https://postimg.cc/vDDX81QS)
 
+Como vemos hay diferencias pero son muy sutiles
+\- El servicio de **mysql** de producción corre en el puerto 3306 de nuestro host, por eso el de desarrollo lo teniamos mapeado al 3307.
+\- El volumen al que se monta el servicio de la BDD es "mysql-data" en lugar de "mysql-dev-data", para tener volumenes distintos en producción y desarrollo.
+\- En el servicio de **backend** para producción establecemos la NODE_ENV a "production" en lugar de a "development"
+\- En el servicio de **frontend** establecemos NODE_ENV también a producción y hacemos el build de la imagen con el Dockerfile de producción en lugar del de desarrollo. Esto nos hara un build del frontend y nos servirá el dist a través de nginx.
+\- En el servicio de **frontend** mapeamos el puerto de nuestro host en que queremos que se sirva el frontend al puerto expuesto de nginx. He puesto el 81 pero pudes poner el que quieras siempre que este libre.
+\- El **volumen** creado es diferente al anterior 
+**NOTA:** Podeis ver que la network de desarrollo y producción es la misma, esto se debe a que no he usado ambos entornos a la vez nunca y por lo tanto no habria problemas ya que la network se crea y se destruye cuando iniciamos o paramos docker compose. Si queremos tener el entorno de producción y el de desarrollo desplegados a la vez habria que especificar nombres de network diferentes para cada una. 
 
+### 3. .dockerignore
+[![dockerignore.png](https://i.postimg.cc/jjW56R50/dockerignore.png)](https://postimg.cc/t1jppQW2)
+
+Es un archivo muy sencillito en el que simplemente especificamos los archivos que no queremos que docker tenga en cuenta a la hora de crear las imagenes.
+
+### 4. Ejecutar docker compose
+Nos dirigimos en la consola de Debian al directorio en el que se encuentren nuestros archivos de docker-compose.
+Ejecutamos el siguiente comando
+```
+docker-compose -f docker-compose.yaml up --build -d
+```
+`-f docker-compose.yaml` Como nosotros tenemos 2 archivos docker compose, para producción y dev tenemos que seleccionar el archivo que queremos usar
+`up --build` inicia el archivo y construye las imagenes necesarias que se van a utilizar
+`-d` hace que se ejecute en segundo plano
+
+Una vez terminada la ejecución obtendremos algo semejante a esto 
+[![compose-prod-log.png](https://i.postimg.cc/25zpmwsH/compose-prod-log.png)](https://postimg.cc/K1spDnvL)
+
+Y podremos acceder a nuestra aplicación en los puerto establecidos, en este caso como es en producción podriamos acceder al frontend en localhost:81
+
+Y podemos ver también toda la información de los contenedores, las imagenes que utilizan, sus logs y demás en Docker Desktop.
+
+[![docker-compose-desktop.png](https://i.postimg.cc/KjVkh44N/docker-compose-desktop.png)](https://postimg.cc/9wdFGmdR)
+
+[![docker-compose-logs-desktop.png](https://i.postimg.cc/jqkJ73v7/docker-compose-logs-desktop.png)](https://postimg.cc/nMBz8kyF)
+
+Por supuesto también tenemos acceso a toda esta información desde la CLI sin necesidad de Docker Desktop, pero Desktop nos lo muestra de una manera más visual.
+
+con `docker ps` veriamos los contenedores que estan funcionando y con 
+`doker logs proyectoformativo-backend-1` veriamos los mismos logs del backend que arriba. 
+
+Para detener los contenedores podemos hacerlo bien desde Docker Desktop o simplemente con el comando de 
+```
+docker compose down 
+```
+Este comando elimina tanto los contenedores como las network asociadas al archivo compose correspondiente. Los volumenes persisten (que es lo que queremos) a no ser que  se añada la etiqueta `--volumes` al comando.
+
+Las imagenes permanecen también en nuestro equipo para ser utilizadas con mayor rapidez la proxima vez que las necesitemos, si queremos eliminarlas podemos con Dekstop o con la CLI.
+
+### 5. Subir, descargar y utilizar imagenes de otros.
 
 
 
