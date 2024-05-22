@@ -155,11 +155,13 @@ Como vemos en lugar de utilizar simplemente `COPY . .` para copiar todos los arc
 **Dockerfile del Frontend para desarrollo**
 
 [![frontend-dev-dockerfile.png](https://i.postimg.cc/sxQBBBmQ/frontend-dev-dockerfile.png)](https://postimg.cc/kRCMzgkq)
+
 Como observamos es practicamente igual a la del backend, a diferencia del comando que se lanza al construir el contenedor `npm run dev` para lanzar el frontend de Vue 3 + Vite en modo desarrollo.
 
 **Dockerfile del Frontend para producción**
 
 [![frontend-prod-dockerfile.png](https://i.postimg.cc/Qx79hTVv/frontend-prod-dockerfile.png)](https://postimg.cc/svVDJ1YJ)
+
 Puesto que cada contenedor debe estar lo más aislado posible y desempeñar solo una función vamos a tener frontend y backend en contenedores separados. Por ello vamos a utilizar [nginx](https://hub.docker.com/_/nginx) para servir los archivos estaticos de la build del frontend.
 
 El archivo nginx.conf se ve tal que así
@@ -188,6 +190,7 @@ Una vez hemos visto las características más importantes vamos a ver como ejemp
 **docker-compose.dev para lanzar la app en desarrollo**
 
 [![docker-compose-dev.png](https://i.postimg.cc/L59YHHQw/docker-compose-dev.png)](https://postimg.cc/VrhLgc8W)
+
 
 
 
