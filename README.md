@@ -202,14 +202,21 @@ Vamos a hacer una pequeña recopilación de buenas prácticas que seguir mientra
 
 #### 1. Manten tus imagenes pequeñas y sencillas
 Cuanto más pequeñas son las imagenes más rápido cargan y más rapido pueden descargarse.
+
 **1.1** Siempre que sea posible deberias **utilizar como imagen base** una [imagen oficial de Docker](https://hub.docker.com/search?q=&image_filter=official), en lugar de construir tu propia imagen.
+
 **1.2** **Utilizar [multi-stage builds](https://docs.docker.com/build/building/multi-stage/)** es recomendable siempre que se pueda para que la imagen final guarde la menos cantidad de información posible.
+
 **1.3** Si utilizas varias imagenes que tienen mucho en común **considera crear tu propia imagen** con los componentes en común y ramificar a partir de ahi. De esa manera las capas en común quedan en cache.
+
 **1.4** Cuando construyas imagenes intenta **utilizar tags apropiados** que establezcan la version, el entorno de producción, etc.
+
 **1.5 No instales paquetes innecesarios**, para reducir la complejidad de las imagenes intenta que cada una de ellas contenta solo los paquetes necesarios para su uso.
 
 #### 2. Persistencia de datos
+
 **2.1** **Utiliza volumenes** en lugar de almacenar los datos en el propio contenedor
+
 **2.2** Utilizar [bind-mounts](https://docs.docker.com/storage/bind-mounts/) es apropiado **durante el desarrollo**, pero en producción utilizar volumenes.
 
 #### 3. Desacopla las aplicaciones
