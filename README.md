@@ -189,7 +189,47 @@ Una vez hemos visto las características más importantes vamos a ver como ejemp
 
 **docker-compose.dev para lanzar la app en desarrollo**
 
-[![docker-compose-dev.png](https://i.postimg.cc/L59YHHQw/docker-compose-dev.png)](https://postimg.cc/VrhLgc8W)
+En los archivos de docker-compose como podemos ver es importante la indentación (como en python), ya que si no es correcta puede llevar a un mal funcionamiento del archivo.
+
+En este archivo tenemos 3 servicios:
+
+\- **mysql**
+[![mysql-service.png](https://i.postimg.cc/0QT6wYQg/mysql-service.png)](https://postimg.cc/Q9qxLW1S)
+
+En este servicio hacemos lo siguiente
+
+`image: mysql:8.0` definimos la imagen que va a utilizar el servicio mysql y sobre la que se va a crear el contenedor de la base de datos. Si recordais no hemos creado Dockerfile para la base de datos y esto se debe a que directamente vamos a utilizar una **imagen oficial** para la base de datos, lo cual es una **buena práctica**.
+
+`restart: always` Define que el contenedor se reiniciara automaticamente si se detiene por algun motivo
+
+```
+environment:
+    MYSQL_ROOT_PASSWORD: user
+    MYSQL_DATABASE: proyecto_formativo_db
+    MYSQL_USER: user
+    MYSQL_PASSWORD: user
+```
+Define las variables de entorno que se van a utilizar en el contenedor de mysql, estas variables de entorno sirven para configurar la base de datos, podemos ver como se utilizan en la [documentación de la imagen](https://hub.docker.com/_/mysql) de MySQL.
+En este caso simplemente establecemos una password para el root de mysql, creamos la database que vamos a utilizar si no existe y creamos un usuario para usar la base de datos al que se le dan privilegios automaticamente.
+```
+ports:
+    - "3307:3306"
+``` 
+Mapeamos el puerto del contenedor 3306 (por defecto en MySQL) al puerto 3307 de nuestra máquina host. Esto es util si por ejemplo tenemos otro contenedor corriendo en el puerto 3306.
+
+```
+volumes:
+    - mysql-dev-data:/var/lib/mysql
+```
+Establecemos el volumen que vamos a utilizar para persistir los datos de la BDD, "mysql-dev-data" es el nombre de volumen que creamos en el docker-compose y ":/var/lib/mysql" mapea el path por defecto en el que el contenedor de MySQL guarda los datos a nuestro volumen.
+
+\- backend
+\- frontend
+
+Y demás tenemos definidos un volumen para la base de datos y una network
+
+
+
 
 
 
