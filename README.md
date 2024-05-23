@@ -161,20 +161,25 @@ Ahora que tenemos Docker instalado vamos a proceder a dockerizar nuestra aplicac
 Nuestra intención es ser capaces de lanzar la aplicación tanto en modo de producción como de desarrollo a través de [Docker Compose](https://docs.docker.com/compose/), es una herramienta que nos permite lanzar varios contenedores a la vez e interconectarlos para trabajar a la vez con ellos.
 
 **[1. Crear Dockerfiles para Frontend, Backend y BDD](#1-crear-dockerfiles-para-frontend-backend-y-bdd)**
+
 Las [Dockerfiles](https://docs.docker.com/guides/docker-concepts/building-images/writing-a-dockerfile/) son los archivos que nos permiten construir imagenes para luego poder ser utilizadas a traves de contenedores.
 
 **[2. Crear archivos docker-compose para lanzar la app.](#2-crear-archivos-docker-compose-para-lanzar-la-app)**
+
 El [docker-compose.yaml](https://docs.docker.com/compose/compose-application-model/) nos permite lanzar a la vez diferentes contenedores basados en sus correspondientes imagenes y con sus configuraciones.
 
 **[3. .dockerignore](#3-dockerignore)**
+
 Fichero similar a un .gitignore para que determinadas cosas no se vean incluidas en la imagen, como por ejemplo las dependencias.
 
 **[4. Ejecutar docker compose](#4-ejecutar-docker-compose)**
 
 **[5. Subir, descargar y utilizar imagenes de otros.](#5-subir-descargar-y-utilizar-imagenes-de-otros)**
+
 Una vez hemos aprendido a crear nuestras imagenes y a lanzar una aplicación multi-contenedor es conveniente aprender a subir las imagenes a un registro para que otras personas puedan utilizarlas.
 
 **[6. Desarrollar aplicación desde cero con Docker.](#6-desarrollar-aplicación-desde-cero-con-docker)**
+
 Aprende a integrar Docker en tu desarrollo desde cero.
 
 
