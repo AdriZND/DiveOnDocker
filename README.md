@@ -510,6 +510,7 @@ La estructura del proyecto quedará de este estilo
 
 
 Nos situamos en la carpeta donde vamos a situar el proyecto 
+
 **1. Creamos estructura del proyecto**
 ```
 mkdir backend
