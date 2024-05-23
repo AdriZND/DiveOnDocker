@@ -24,11 +24,38 @@ Lo más seguro es que esto ya lo tengamos hecho pues para utilizar Debian en Win
 
 ##### Descargar e instalar Docker
 
-Una vez tenemos WSL 2 simplemente tenemos que hacernos con la última versión de Docker Desktop e instalarla.
+Una vez tenemos WSL 2 simplemente tenemos que hacernos con la última versión de Docker Desktop e instalarla. 
+Docker Desktop incluye por defecto las siguientes  funcionalidades o herramientas:
+
+-Docker Engine
+-Docker CLI client
+-Docker Scout
+-Docker Build
+-Docker Extensions
+-Docker Compose
+-Docker Content Trust
+-Kubernetes
+-Credential Helper
 
 Descargamos la ultima versión de [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) desde la web oficial de Docker.
 
 Una vez se descargue simplemente ejecutamos el instalador y nos aseguramos de que cuando nos pregunte marcamos la opción de "Use WSL instead of Hyper-V"
+
+En caso de que ya tengamos descargado Docker y queramos cambiar la configuración o añadamos alguna nueva distribución que queramos habilitar para Docker en WSL debemos hacer lo siguiente.
+
+En el menú de Docker Desktop nos dirigimos a la pestaña de Settings, arriba a la derecha. Y vamos a Resources > WSL Integration
+
+Debemos tener marcada la opción de "Enable integration with my default WSL distro"
+
+Debajo podemos además marcar distros adicionales que queramos integrar, en mi caso veis que Debian no esta marcada a pesar de ser la que utilizo, eso es porque ya de por si Debian es mi distribución por defecto.
+
+[![desktop-enable.png](https://i.postimg.cc/tChC1wwD/desktop-enable.png)](https://postimg.cc/7fZydsxT)
+
+Aplicamos cambios guardamos y si queremos reiniciamos la herramienta.
+
+También tenemos que asegurarnos de que la opción de "Use WSL 2 based engine" está marcada en la pestaña general de settings
+
+[![desktop-wsl2.png](https://i.postimg.cc/RVRxxBjr/desktop-wsl2.png)](https://postimg.cc/YhhsQJr8)
 
 ### Docker Engine
 De esta manera prescindimos de la GUI, si tu editor de código es VS Code tienes una [extensión](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) que puedes instalar.
@@ -382,7 +409,66 @@ Las imagenes permanecen también en nuestro equipo para ser utilizadas con mayor
 
 ### 5. Subir, descargar y utilizar imagenes de otros.
 
+[En este apartado](https://docs.docker.com/get-started/04_sharing_app/) de la documentación hay un pequeño resumen de como subir nuestras imagenes a Docker Hub.
 
+Lo primero es crear nuestra cuenta en Docker Hub.
+Una vez creada en el menú principal elegimos la opción de **crear repositorio**.
+
+[![crear-repositorio.png](https://i.postimg.cc/MZ47GJw4/crear-repositorio.png)](https://postimg.cc/w3XyWP7c)
+
+Establecemos el nombre del repositorio, la descripción y le damos a crear.
+
+[![repositorio-nombre.png](https://i.postimg.cc/XJ5CGp4z/repositorio-nombre.png)](https://postimg.cc/N9gMZGy6)
+
+Ahora, nos dirigimos al proyecto donde se encuentre la Dockerfile para crear la imagen que deseemos y la creamos especificando como tag el nombre de nuestro repositorio seguido del nombre de la imagen, en mi caso:
+
+adriznd/guia-docker:1
+
+El :1 es una tag adicional para controlar la versión de la imagen, o lo que deseemos.
+
+Creamos la imagen, en mi caso voy a utilizar simplemente el proyecto de getting started de la documentación.
+
+```
+docker build -t adriznd/guia-docker:1 .
+# El . del final indica el directorio en el que nos encontramos
+```
+Comprobamos que la imagen ha sido creada con `docker image ls` lo cual nos muestra la lista de imagenes que tenemos
+
+Después deberiamos de hacer `docker login` en la CLI y especificar nuestro usuario y contraseña para loggear en Docker Hub.
+Una vez hayamos iniciado sesión correctamente podemos utilizar el comando `push` para subir la imagen al repositorio.
+
+```
+docker push adriznd/guia-docker:1
+```
+[![repositorio-push.png](https://i.postimg.cc/L513S2yz/repositorio-push.png)](https://postimg.cc/FkhLg5XR)
+
+[![repositorio-version.png](https://i.postimg.cc/NG94mkg5/repositorio-version.png)](https://postimg.cc/s1z7RSGr)
+
+Podemos observar como la imagen esta subida a nuestro repositorio y podemos identificarla con el TAG que habiamos dado antes. 
+
+Ahora ya podriamos utilizar esta imagen, nosotros mismos o quien quisiera (si el repositorio es publico) o quien tuviera acceso (si es privado).
+
+Podemos hacer uso de ella en docker-compose con
+
+```
+image: adriznd/guia-docker:1
+```
+
+O si queremos correr un contenedor de esa imagen de manera aislada podemos descargarla con 
+
+```
+docker pull adriznd/guia-docker:1
+```
+
+y despues ejecutarla con 
+
+```
+docker run -dp 8080:8080 adriznd/guia-docker:1
+```
+
+### 6. Desarrollar aplicación desde cero con Docker
+
+Hemos visto como Dockerizar una aplicación que tenemos ya construida y esto nos va genial para antiguos proyectos. Pero una vez que sabemos utilizar Docker podemos implementarlo desde la base del desarrollo de nuestras apps para hacer el desarrollo mucho más fluido y solido.
 
 ## Buenas prácticas
 
@@ -410,4 +496,71 @@ Cuanto más pequeñas son las imagenes más rápido cargan y más rapido pueden 
 #### 3. Desacopla las aplicaciones
 Cada contenedor deberia estar dedicado a realizar **exclusivamente una tarea**, de manera que deberiamos separar y aislar la funcionalidad de los contenedores lo mayor posible. Es preferible por ejemplo tener un contenedor para la base de datos, otro para el frontend y otro para el backend que ejecutar todo en el mismo contenedor
 
-#### 4.
+#### 4. Variables de Entorno
+Es común que trabajando con Docker hagamos uso de variables de entorno. Tenemos que entender que en Docker si establecemos la misma variable de entorno, por ejemplo NODE_ENV, desde diferentes fuentes, Docker utiliza la regla de la procedencia para establecer el valor de la misma. 
+
+1. Con **-e** en la CLI
+```
+# Usando docker run -e si trabajamos la imagen
+docker run -e NODE_ENV=dev <mi-imagen>
+# Si trabajamos el servicio
+docker compose run -e NODE_ENV=dev <mi-servicio>
+```
+
+2. Sustituirlo en consola de comandos
+```
+#Podemos cambiar el valor de la variable a traves de consola donde docker compose se ejecuta
+export NODE_ENV=dev
+```
+
+3. Con atributo **enviroment** en archivo docker-compose
+```
+services:
+  my_service:
+    image: my_image
+    environment:
+      NODE_ENV: dev
+```
+
+4. Usar **--env-file** en la CLI
+```
+docker compose --env-file ./config/.env.dev up
+```
+
+5. Usar **env_file** en archivo docker-compose
+```
+web:
+  env_file:
+    - web-variables.env
+```
+6. Archivo **.env** en root del proyecto, donde se encuentra docker-compose.yaml
+
+```
+services:
+  web:
+    image: "webapp:${MI_VARIABLE_DE_ENTORNO}"
+```
+
+7. Utilizando directiva **ENV** en Dockerfile
+Esto solo se resuelve si nada de lo anterior lo sobreescribe, podemos establecer un valor default por ejemplo para el modo de desarrollo.
+
+```
+# En el archivo Dockerfile
+
+ENV NODE_ENV= production
+```
+
+Las **buenas prácticas** con variables de entorno son:
+
+###### 1. Utiliza la flag -e o el archivo .env.
+
+###### 2. Mantén seguro tu archivo .env: El archivo .env puede contener información sensible, como claves API y contraseñas de bases de datos. Es crucial mantener tu archivo .env seguro y no incluirlo en tu repositorio de código.
+
+###### 3. Usa nombres de variables descriptivos.
+
+###### 4. Define valores predeterminados.
+
+###### 5. Actualiza tu archivo .env regularmente.
+
+###### 6. Utiliza Docker Compose: Al trabajar con Docker Compose, las variables de entorno pueden definirse en el archivo docker-compose.yml, proporcionando una ubicación para el archivo .env
+
