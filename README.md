@@ -504,23 +504,9 @@ Hemos visto como Dockerizar una aplicación que tenemos ya construida y esto nos
 
 Vamos a hacer un pequeño scaffold o plantilla para iniciar el desarrollo de un proyecto con Docker, basado en un Backend de Node y Express y un Frontend de Vue 3 + Vite, en este caso utilizaremos la imagen de MySQL oficial para el contenedor de la Base de Datos.
 
-La estructura del proyecto será la siguiente
+La estructura del proyecto quedará de este estilo
 
-docker-scaffold/
-├── backend/
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── package-lock.json
-│   └── src/
-│       └── index.js
-├── frontend/
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── package-lock.json
-│   └── src/
-│       └── main.js
-├── docker-compose.yml
-└── .env
+[![folder-structure.png](https://i.postimg.cc/Nf5vPqLG/folder-structure.png)](https://postimg.cc/rKXHKHS7)
 
 
 Nos situamos en la carpeta donde vamos a situar el proyecto 
