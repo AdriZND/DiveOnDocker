@@ -1,9 +1,13 @@
 # DiveOnDocker
 ### Índice
 [1. ¿Qué es Docker?](#qué-es-docker)
+
 [2. Instalar Docker](#instalar-docker)
+
 [3. Verificar instalación](#verificar-instalación)
+
 [4. Como utilizar Docker](#cómo-utilizar-docker)
+
 [5. Buenas prácticas](#buenas-prácticas)
 
 Vamos a hacer una pequeña guía de qué es docker, como se utiliza y para que sirve, asi como una serie de consejos y buenas practicas para hacer su uso más facil.
