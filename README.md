@@ -6,7 +6,7 @@
 
 [3. Verificar instalación](#verificar-instalación)
 
-[4. Como utilizar Docker](#cómo-utilizar-docker)
+[4. Como utilizar Docker](#como-utilizar-docker)
 
 [5. Buenas prácticas](#buenas-prácticas)
 
@@ -38,13 +38,21 @@ Una vez tenemos WSL 2 simplemente tenemos que hacernos con la última versión d
 Docker Desktop incluye por defecto las siguientes  funcionalidades o herramientas:
 
 -Docker Engine
+
 -Docker CLI client
+
 -Docker Scout
+
 -Docker Build
+
 -Docker Extensions
+
 -Docker Compose
+
 -Docker Content Trust
+
 -Kubernetes
+
 -Credential Helper
 
 Descargamos la ultima versión de [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) desde la web oficial de Docker.
