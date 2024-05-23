@@ -1,10 +1,16 @@
 # DiveOnDocker
+### Índice
+[1. ¿Qué es Docker?](#qué-es-docker)
+[2. Instalar Docker](#instalar-docker)
+[3. Verificar instalación](#verificar-instalación)
+[4. Como utilizar Docker](#cómo-utilizar-docker)
+[5. Buenas prácticas](#buenas-prácticas)
 
 Vamos a hacer una pequeña guía de qué es docker, como se utiliza y para que sirve, asi como una serie de consejos y buenas practicas para hacer su uso más facil.
 
 Gran parte de la información de esta guía se basa en la [Documentación oficial](https://docs.docker.com/get-started/) de Docker, y aconsejo acudir a ella con cualquier duda ya que es bastante buena.
 
-## ¿Qúe es Docker?
+## ¿Qué es Docker?
 Docker es una plataforma que facilita el desarrollo, envío y ejecución de aplicaciones, permitiendo separar las aplicaciones de la infraestructura para una entrega rápida de software y una gestión unificada. Sus metodologías reducen el tiempo entre la escritura del código y su ejecución en producción. 
 
 Sus elementos más importantes son las [imágenes](https://docs.docker.com/guides/docker-concepts/the-basics/what-is-an-image/) y los [contenedores](https://docs.docker.com/guides/docker-concepts/the-basics/what-is-a-container/)
@@ -135,21 +141,34 @@ Seguramente veas que no aparece nada, esto se debe a que `docker ps` solo nos mu
 
 Con esto en principio deberiamos tener la instalación de docker hecha.
 
-## Cómo utilizar docker
+## Como utilizar docker
 
 Ahora que tenemos Docker instalado vamos a proceder a dockerizar nuestra aplicación. Voy a tomar de referencia [esta aplicación](https://github.com/AdriZND/ProyectoFormativo) que desarrollé. Consiste en un Frontend de Vue 3 + Vite, un Backend en ExpressJs y Node y una base de datos MySQL que utilizamos mediante el ORM de Sequelize.
 
 #### ¿Qué queremos conseguir?
 Nuestra intención es ser capaces de lanzar la aplicación tanto en modo de producción como de desarrollo a través de [Docker Compose](https://docs.docker.com/compose/), es una herramienta que nos permite lanzar varios contenedores a la vez e interconectarlos para trabajar a la vez con ellos.
 Para lograr esto debemos seguir los siguientes pasos.
-##### 1. Crear Dockerfiles para Frontend, Backend y BDD
+##### [1. Crear Dockerfiles para Frontend, Backend y BDD](#1-crear-dockerfiles-para-frontend-backend-y-bdd)
+
 Las [Dockerfiles](https://docs.docker.com/guides/docker-concepts/building-images/writing-a-dockerfile/) son los archivos que nos permiten construir imagenes para luego poder ser utilizadas a traves de contenedores.
-##### 2. Crear archivos docker-compose para lanzar la app.
+##### [2. Crear archivos docker-compose para lanzar la app.](#2-crear-archivos-docker-compose-para-lanzar-la-app)
+
 El [docker-compose.yaml](https://docs.docker.com/compose/compose-application-model/) nos permite lanzar a la vez diferentes contenedores basados en sus correspondientes imagenes y con sus configuraciones.
-##### 3. .dockerignore
+
+##### [3. .dockerignore](#3-dockerignore)
+
 Fichero similar a un .gitignore para que determinadas cosas no se vean incluidas en la imagen, como por ejemplo las dependencias.
-##### 4. Publicar nuestras imagenes
+
+##### [4. Ejecutar docker compose](#4-ejecutar-docker-compose)
+
+##### [5. Subir, descargar y utilizar imagenes de otros.](#5-subir-descargar-y-utilizar-imagenes-de-otros)
+
 Una vez hemos aprendido a crear nuestras imagenes y a lanzar una aplicación multi-contenedor es conveniente aprender a subir las imagenes a un registro para que otras personas puedan utilizarlas.
+
+##### [6. Desarrollar aplicación desde cero con Docker.](#6-desarrollar-aplicación-desde-cero-con-docker)
+
+Aprende a integrar Docker en tu desarrollo desde cero.
+
 
 ### 1. Crear Dockerfiles para Frontend, Backend y BDD
 El primer paso para poder desplegar o desarrollar nuestra aplicación con Docker es crear las Dockerfiles, son archivos de configuración separados por ordenes o instrucciones que se van ejecutando por [capas](https://docs.docker.com/build/guide/layers/) para poder formar la imagen. 
@@ -470,6 +489,205 @@ docker run -dp 8080:8080 adriznd/guia-docker:1
 
 Hemos visto como Dockerizar una aplicación que tenemos ya construida y esto nos va genial para antiguos proyectos. Pero una vez que sabemos utilizar Docker podemos implementarlo desde la base del desarrollo de nuestras apps para hacer el desarrollo mucho más fluido y solido.
 
+Vamos a hacer un pequeño scaffold o plantilla para iniciar el desarrollo de un proyecto con Docker, basado en un Backend de Node y Express y un Frontend de Vue 3 + Vite, en este caso utilizaremos la imagen de MySQL oficial para el contenedor de la Base de Datos.
+
+La estructura del proyecto será la siguiente
+
+docker-scaffold/
+├── backend/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── package-lock.json
+│   └── src/
+│       └── index.js
+├── frontend/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── package-lock.json
+│   └── src/
+│       └── main.js
+├── docker-compose.yml
+└── .env
+
+
+Nos situamos en la carpeta donde vamos a situar el proyecto 
+**1. Creamos estructura del proyecto**
+```
+mkdir backend
+mkdir frontend
+touch docker-compose.yaml .env
+```
+**NOTA:** Podemos crear las carpetas y los archivos directamente desde nuestro editor de codigo si lo deseamos también.
+
+**2. Configuramos el Backend**
+```
+cd backend
+npm init -y
+npm install express
+touch Dockerfile
+mkdir src
+touch src/server.js
+```
+
+Editamos la Dockerfile 
+```
+# Use an official Node runtime as a parent image
+FROM node:20.13.1-bookworm-slim
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose port
+EXPOSE 8080
+
+# Start the application
+CMD ["node", "src/server.js"]
+```
+
+Editamos src/server.js
+```
+const express = require('express')
+const app = express()
+const port = 8080
+
+app.get('/', (req, res) => {
+  res.send('Hello World from Backend!')
+})
+
+app.listen(port, () => {
+  console.log(`Backend listening at http://localhost:${port}`)
+})
+```
+**2. Configuramos el Frontend**
+
+```
+cd ../frontend
+npm init vite@latest
+# Deja el nombre default o lo que quieras, elige Vue como framework y sigue las instrucciones
+#Ahora vamos a mover los archivos creados a frontend y borrar la carpeta que nos ha creado
+cd vite-project
+mv * ../
+cd ..
+rm -r vite-project
+# De esta manera tenemos todos los archivos del proyecto de vite vue directamente en la root de frontend
+#Instalamos dependencias y creamos Dockerfile
+npm install
+touch Dockerfile
+```
+
+Configuramos el Dockerfile
+```
+# Use an official Node runtime as a parent image
+FROM node:20.13.1-bookworm-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "run", "dev"]
+
+Recordemos que tenemos que configurar el archivo de vite.config para poder trabajar con Docker
+
+```
+
+**3. Configuramos archivo docker-compose.yaml**
+```
+services:
+  postgres:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: user
+      POSTGRES_DB: scaffold
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - docker-scaffold
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -d scaffold -U user"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - docker-scaffold
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - docker-scaffold
+    depends_on:
+      - backend
+
+volumes:
+  db-data:
+
+networks:
+  docker-scaffold:
+```
+
+Y listo, nos situamos en el directorio que contenga el archivo de docker-compose.yaml y ejecutamos
+```
+docker compose up --build
+```
+o
+```
+docker compose up --build -d 
+```
+Si queremos que corra en segundo plano 
+
+En este caso no es necesario especificar el nombre del archivo compose ya que solo hay uno y tiene el nombre por defecto. Esta build esta configurada para desarrollo si quisieramos desplegar la aplicación tendriamos que añadir las modificaciones necesarias o mejor aún añadir otro archivo compose para modo producción como ya hemos visto.
+
+Y ya lo tenemos, podemos acceder tanto al frontend como al backend en los puertos establecidos y podemos empezar a desarrollar nuestra aplicación.
 ## Buenas prácticas
 
 Vamos a hacer una pequeña recopilación de buenas prácticas que seguir mientras desarrollamos con Docker. Gran parte de ellas han sido recapituladas de la [documentación oficial](https://docs.docker.com/develop/dev-best-practices/).
