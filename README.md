@@ -212,13 +212,21 @@ Algunas de las instrucciones más comunes que se utilizan en las DockerFiles son
 Ahora que sabemos un poco más sobre las Dockerfiles y como se construyen vamos a ver como he Dockerizado la aplicación.
 La estructura del proyecto es la siguiente:
 
-[![estructura-proyecto.png](https://i.postimg.cc/fb4WT2SN/estructura-proyecto.png)](https://postimg.cc/SnrbgGGT)
+[![estructura-proyecto.png](https://i.postimg.cc/8krSyPWt/estructura-proyecto.png)](https://postimg.cc/ThGF1xtD)
 
-**Dockerfile del backend**
+**Dockerfile.dev del backend para desarrollo**
 
 [![backend-dockerfile.png](https://i.postimg.cc/CxDjP2jB/backend-dockerfile.png)](https://postimg.cc/5X4YjnKb)
 
 Como vemos en lugar de utilizar simplemente `COPY . .` para copiar todos los archivos de golpe realizamos dos `COPY` en el primero copiamos el package.json y el package-lock.json y en el segundo el resto de los archivos. Esto es una **buena practica** ya que son archivos que no suelen modificarse tanto y nos evita tener que copiarlos e instalar las dependencias cada vez que se construya la imagen, a no ser que hayamos incluido alguna nueva dependencia. Solamente copiariamos el resto de archivos para implementar nuevas modificaciones de código etc.
+
+**Dockerfile del Backend para producción**
+
+[![dockerfile-backend-prod.png](https://i.postimg.cc/ncjGjgys/dockerfile-backend-prod.png)](https://postimg.cc/QHDTv4xs)
+
+En esta Dockerfile hacemos uso del [multi-stage ](https://docs.docker.com/build/guide/multi-stage/) tenemos un primer stage para hacer la build del frontend, y un segundo stage para coger los archivos estaticos generados en la build, copiarlos al backend y que de esa manera el backend pueda servir los archivos en producción.
+
+Las rutas desde las que copiamos los archivos estan especificadas de esta manera ya que luego en el docker-compose.yaml establecemos como contexto la raiz del proyecto, para que pueda acceder tanto a los archivos del frontend como del backend. Si no no podriamos hacer la build del frontend desde el Dockerfile del backend.
 
 **Dockerfile del Frontend para desarrollo**
 
@@ -234,19 +242,6 @@ server: {
   },
 ```
 Para asi indicarle a que escuche otras direcciones.
-
-**Dockerfile del Frontend para producción**
-
-[![frontend-prod-dockerfile.png](https://i.postimg.cc/Qx79hTVv/frontend-prod-dockerfile.png)](https://postimg.cc/svVDJ1YJ)
-
-Puesto que cada contenedor debe estar lo más aislado posible y desempeñar solo una función vamos a tener frontend y backend en contenedores separados. Por ello vamos a utilizar [nginx](https://hub.docker.com/_/nginx) para servir los archivos estaticos de la build del frontend.
-
-El archivo nginx.conf se ve tal que así
-
-[![nginx-conf.png](https://i.postimg.cc/c4x2NQDL/nginx-conf.png)](https://postimg.cc/0r4cYJRT)
-
-Es una configuración por defecto que practicamente no tenemos que cambiar, si queremos retocar algo acudir a la documentación de nginx.
-Lo unico que he cambiado aqui ha sido el "server_name" para establecer la dirección del backend.
 
 **Resumen**
 
@@ -380,19 +375,18 @@ Y después tenemos definidos un volumen para la base de datos y una network, que
 
 #### 2.2 docker-compose.yaml para lanzar la app en producción
 
-[![docker-compose-prod.png](https://i.postimg.cc/2j7twvgm/docker-compose-prod.png)](https://postimg.cc/vDDX81QS)
+[![docker-compose-prod.png](https://i.postimg.cc/dVTFfszq/docker-compose-prod.png)](https://postimg.cc/WdjxFvNK)
 
 Como vemos hay diferencias pero son muy sutiles
+\- No tenemos servicio del frontend, ya que serviremos los archivos estaticos desde el servicio del backend en el mismo puerto.
+
+\- En el contexto de la build del **backend** establecemos la raiz del proyecto "./" para que el build tenga acceso a todos los archivos del proyecto, esto es debido a que en el Dockerfile del backend para producción necesitamos acceso tambien a archivos del frontend para poder copiarlos, hacer la build etc.
+
+\- En el servicio de **backend** para producción establecemos la NODE_ENV a "production" en lugar de a "development"
 
 \- El servicio de **mysql** de producción corre en el puerto 3306 de nuestro host, por eso el de desarrollo lo teniamos mapeado al 3307.
 
 \- El volumen al que se monta el servicio de la BDD es "mysql-data" en lugar de "mysql-dev-data", para tener volumenes distintos en producción y desarrollo.
-
-\- En el servicio de **backend** para producción establecemos la NODE_ENV a "production" en lugar de a "development"
-
-\- En el servicio de **frontend** establecemos NODE_ENV también a producción y hacemos el build de la imagen con el Dockerfile de producción en lugar del de desarrollo. Esto nos hara un build del frontend y nos servirá el dist a través de nginx.
-
-\- En el servicio de **frontend** mapeamos el puerto de nuestro host en que queremos que se sirva el frontend al puerto expuesto de nginx. He puesto el 81 pero pudes poner el que quieras siempre que este libre.
 
 \- El **volumen** creado es diferente al anterior 
 
@@ -416,15 +410,15 @@ docker-compose -f docker-compose.yaml up --build -d
 `-d` hace que se ejecute en segundo plano
 
 Una vez terminada la ejecución obtendremos algo semejante a esto 
-[![compose-prod-log.png](https://i.postimg.cc/25zpmwsH/compose-prod-log.png)](https://postimg.cc/K1spDnvL)
+[![compose-prod-log.png](https://i.postimg.cc/NjryxwDX/compose-prod-log.png)](https://postimg.cc/mPB2bJ0Z)
 
-Y podremos acceder a nuestra aplicación en los puerto establecidos, en este caso como es en producción podriamos acceder al frontend en localhost:81
+Y podremos acceder a nuestra aplicación en los puerto establecidos, en este caso como es en producción podriamos acceder al frontend servido desde el backend en localhost:8080
 
 Y podemos ver también toda la información de los contenedores, las imagenes que utilizan, sus logs y demás en Docker Desktop.
 
-[![docker-compose-desktop.png](https://i.postimg.cc/KjVkh44N/docker-compose-desktop.png)](https://postimg.cc/9wdFGmdR)
+[![docker-compose-desktop.png](https://i.postimg.cc/7YJPFnz8/docker-compose-desktop.png)](https://postimg.cc/0bxqmmZc)
 
-[![docker-compose-logs-desktop.png](https://i.postimg.cc/jqkJ73v7/docker-compose-logs-desktop.png)](https://postimg.cc/nMBz8kyF)
+[![docker-compose-logs-desktop.png](https://i.postimg.cc/cH6GQdMy/docker-compose-logs-desktop.png)](https://postimg.cc/ygqGK4bv)
 
 Por supuesto también tenemos acceso a toda esta información desde la CLI sin necesidad de Docker Desktop, pero Desktop nos lo muestra de una manera más visual.
 
@@ -712,7 +706,7 @@ Cuanto más pequeñas son las imagenes más rápido cargan y más rapido pueden 
 **2.2** Utilizar [bind-mounts](https://docs.docker.com/storage/bind-mounts/) es apropiado **durante el desarrollo**, pero en producción utilizar volumenes.
 
 #### 3. Desacopla las aplicaciones
-Cada contenedor deberia estar dedicado a realizar **exclusivamente una tarea**, de manera que deberiamos separar y aislar la funcionalidad de los contenedores lo mayor posible. Es preferible por ejemplo tener un contenedor para la base de datos, otro para el frontend y otro para el backend que ejecutar todo en el mismo contenedor
+Cada contenedor deberia estar dedicado a realizar **las menos tareas posibles**, de manera que deberiamos separar y aislar la funcionalidad de los contenedores lo mayor posible. Es preferible por ejemplo tener un contenedor para la base de datos, otro para el frontend y otro para el backend que ejecutar todo en el mismo contenedor.
 
 #### 4. Variables de Entorno
 Es común que trabajando con Docker hagamos uso de variables de entorno. Tenemos que entender que en Docker si establecemos la misma variable de entorno, por ejemplo NODE_ENV, desde diferentes fuentes, Docker utiliza la regla de la procedencia para establecer el valor de la misma. 
